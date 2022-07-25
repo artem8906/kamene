@@ -55,106 +55,106 @@ public class Field implements Serializable {
         }
 
     }
+
     public void move(String action) {
         int tempValue;
 
         switch (action) {
-        case "DOWN" :
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-        if (tiles[i][j].getState() == Tile.State.ABLEMOVETOUP) {
-            tempValue = tiles[i][j].getValue();
-            tiles[i][j].setValue(tiles[i-1][j].value);
-            tiles[i-1][j].setValue(tempValue);
-            break;
-        }
-            }
-        }
-        break;
-
-        case "UP" :
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (tiles[i][j].getState() == Tile.State.ABLEMOVETODOWN) {
-                    tempValue = tiles[i][j].getValue();
-                    tiles[i][j].setValue(tiles[i+1][j].value);
-                    tiles[i+1][j].setValue(tempValue);
-                    break;
+            case "DOWN":
+                for (int i = 0; i < size; i++) {
+                    for (int j = 0; j < size; j++) {
+                        if (tiles[i][j].getState() == Tile.State.ABLEMOVETOUP) {
+                            tempValue = tiles[i][j].getValue();
+                            tiles[i][j].setValue(tiles[i - 1][j].value);
+                            tiles[i - 1][j].setValue(tempValue);
+                            break;
+                        }
+                    }
                 }
-            }
-        }
-        break;
+                break;
 
-        case "RIGHT" :
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (tiles[i][j].getState() == Tile.State.ABLEMOVETOLEFT) {
-                    int value = tiles[i][j].getValue();
-                    tiles[i][j].setValue(tiles[i][j-1].value);
-                    tiles[i][j-1].setValue(value);
-                    break;
+            case "UP":
+                for (int i = 0; i < size; i++) {
+                    for (int j = 0; j < size; j++) {
+                        if (tiles[i][j].getState() == Tile.State.ABLEMOVETODOWN) {
+                            tempValue = tiles[i][j].getValue();
+                            tiles[i][j].setValue(tiles[i + 1][j].value);
+                            tiles[i + 1][j].setValue(tempValue);
+                            break;
+                        }
+                    }
                 }
-            }
-        }
-        break;
+                break;
 
-        case "LEFT" :
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (tiles[i][j].getState() == Tile.State.ABLEMOVETORIGHT) {
-                    int value = tiles[i][j].getValue();
-                    tiles[i][j].setValue(tiles[i][j+1].value);
-                    tiles[i][j+1].setValue(value);
-                    break;
+            case "RIGHT":
+                for (int i = 0; i < size; i++) {
+                    for (int j = 0; j < size; j++) {
+                        if (tiles[i][j].getState() == Tile.State.ABLEMOVETOLEFT) {
+                            int value = tiles[i][j].getValue();
+                            tiles[i][j].setValue(tiles[i][j - 1].value);
+                            tiles[i][j - 1].setValue(value);
+                            break;
+                        }
+                    }
                 }
-            }
+                break;
+
+            case "LEFT":
+                for (int i = 0; i < size; i++) {
+                    for (int j = 0; j < size; j++) {
+                        if (tiles[i][j].getState() == Tile.State.ABLEMOVETORIGHT) {
+                            int value = tiles[i][j].getValue();
+                            tiles[i][j].setValue(tiles[i][j + 1].value);
+                            tiles[i][j + 1].setValue(value);
+                            break;
+                        }
+                    }
+                }
+                break;
         }
-        break;
     }
-    }
 
-        /**
-         * Generates playing field.
-         */
-        private void generate () {
-            Random rd = new Random();
-            int count = 1;
-            tiles[rd.nextInt(4)][rd.nextInt(4)] = new Tile();
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    Tile tile = new Tile();
+    /**
+     * Generates playing field.
+     */
+    private void generate() {
+        Random rd = new Random();
+        int count = 1;
+        tiles[rd.nextInt(4)][rd.nextInt(4)] = new Tile();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Tile tile = new Tile();
                 if (tiles[i][j] == null) {
                     tiles[i][j] = tile;
                     tile.setValue(count++);
                 }
-                }
             }
         }
+    }
+
     public boolean isSolved() {
         int count = 1;
         int idealCount = 1;
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j++) {
-                    if (tiles[i][j].value == count)
-                        idealCount++;
-                    count++;
-                }
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (tiles[i][j].value == count)
+                    idealCount++;
+                count++;
             }
+        }
 
-        return count==idealCount;
+        return count == idealCount;
     }
 
     public void savefield() {
         try (OutputStream is = new FileOutputStream("savings.txt");
-        ObjectOutputStream ois = new ObjectOutputStream(is))
-        {
+             ObjectOutputStream ois = new ObjectOutputStream(is)) {
             ois.writeObject(this);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.getMessage();
         }
-        }
     }
+}
 
 
 

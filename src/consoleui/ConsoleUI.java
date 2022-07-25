@@ -33,7 +33,8 @@ public class ConsoleUI {
             field.savefield();
 
             if (field.isSolved()) {
-
+                System.out.println("You win");
+                System.exit(1);
             }
         } while (true);
     }
@@ -57,10 +58,16 @@ public class ConsoleUI {
         System.out.printf("Time of play %d seconds\n", getTimeOfPlay());
         System.out.println("Press 'w', 's', 'a', 'd' for moving tiles, 'new' for new game or 'exit' for exit");
         String line = readLine();
-        handleInput(line);
+
+        try {
+            Input(line);
+        } catch (WrongUserInputException e) {
+            System.out.println("Try again!");
+            processInput();
+        }
     }
 
-    private void handleInput(String input) {
+    private void Input(String input) throws WrongUserInputException {
         String action = input;
         switch (action) {
             case "w":
@@ -87,9 +94,7 @@ public class ConsoleUI {
                 break;
 
             default:
-                processInput();
-                System.out.println("Try again!");
-                break;
+                throw new WrongUserInputException();
         }
     }
 }
