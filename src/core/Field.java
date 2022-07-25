@@ -1,8 +1,9 @@
 package core;
 
+import java.io.*;
 import java.util.Random;
 
-public class Field {
+public class Field implements Serializable {
     /**
      * Playing field tiles.
      */
@@ -12,59 +13,21 @@ public class Field {
         return tiles;
     }
 
-    /**
-     * Field row count. Rows are indexed from 0 to (rowCount - 1).
-     */
-    private final int rowCount;
-
-    /**
-     * Column count. Columns are indexed from 0 to (columnCount - 1).
-     */
-    private final int columnCount;
+    private final int size;
 
     /**
      * Game state.
      */
     private GameState state = GameState.PLAYING;
 
-    public void setState(GameState state) {
-        this.state = state;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param rowCount    row count
-     * @param columnCount column count
-     * @param mineCount   mine count
-     */
-    public Field(int rowCount, int columnCount, int mineCount) {
-
-        if ( mineCount > (rowCount * columnCount) ) {
-            throw new IllegalArgumentException();
-        }
-        else {
-            this.mineCount = mineCount;
-        }
-        this.rowCount = rowCount;
-        this.columnCount = columnCount;
-        tiles = new Tile[rowCount][columnCount];
+    public Field(int size) {
+        this.size = size;
+        tiles = new Tile[size][size];
 
         //generate the field content
         generate();
     }
 
-    public int getRowCount() {
-        return rowCount;
-    }
-
-    public int getColumnCount() {
-        return columnCount;
-    }
-
-    public int getMineCount() {
-        return mineCount;
-    }
 
     public GameState getState() {
         return state;
@@ -74,142 +37,124 @@ public class Field {
         return tiles[row][column];
     }
 
-    /**
-     * Opens tile at specified indeces.
-     *
-     * @param row    row number
-     * @param column column number
-     */
-    public void openTile(int row, int column) {
-        Tile tile = tiles[row][column];
-        if (tile.getState() == Tile.State.CLOSED) {
-            tile.setState(Tile.State.OPEN);
-            if(tile instanceof Clue && ((Clue)tile).getValue() == 0) {
-                getOpenAdjacentTiles(row, column);
-            }
-            if (tile instanceof Mine) {
-                tile.setState(Tile.State.OPEN);
-                state = GameState.FAILED;
-                return;
-            }
-            if (isSolved()) {
-                state = GameState.SOLVED;
-                return;
+    public void updateState() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                tiles[i][j].setState(null);
             }
         }
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Tile tile = tiles[i][j];
+                if ((j + 1 < size) && tiles[i][j + 1].getValue() == 0) tile.setState(Tile.State.ABLEMOVETORIGHT);
+                if ((j - 1 >= 0) && tiles[i][j - 1].getValue() == 0) tile.setState(Tile.State.ABLEMOVETOLEFT);
+                if ((i + 1 < size) && tiles[i + 1][j].getValue() == 0) tile.setState(Tile.State.ABLEMOVETODOWN);
+                if ((i - 1 >= 0) && tiles[i - 1][j].getValue() == 0) tile.setState(Tile.State.ABLEMOVETOUP);
+            }
+        }
+
+    }
+    public void move(String action) {
+        int tempValue;
+
+        switch (action) {
+        case "DOWN" :
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+        if (tiles[i][j].getState() == Tile.State.ABLEMOVETOUP) {
+            tempValue = tiles[i][j].getValue();
+            tiles[i][j].setValue(tiles[i-1][j].value);
+            tiles[i-1][j].setValue(tempValue);
+            break;
+        }
+            }
+        }
+        break;
+
+        case "UP" :
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (tiles[i][j].getState() == Tile.State.ABLEMOVETODOWN) {
+                    tempValue = tiles[i][j].getValue();
+                    tiles[i][j].setValue(tiles[i+1][j].value);
+                    tiles[i+1][j].setValue(tempValue);
+                    break;
+                }
+            }
+        }
+        break;
+
+        case "RIGHT" :
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (tiles[i][j].getState() == Tile.State.ABLEMOVETOLEFT) {
+                    int value = tiles[i][j].getValue();
+                    tiles[i][j].setValue(tiles[i][j-1].value);
+                    tiles[i][j-1].setValue(value);
+                    break;
+                }
+            }
+        }
+        break;
+
+        case "LEFT" :
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (tiles[i][j].getState() == Tile.State.ABLEMOVETORIGHT) {
+                    int value = tiles[i][j].getValue();
+                    tiles[i][j].setValue(tiles[i][j+1].value);
+                    tiles[i][j+1].setValue(value);
+                    break;
+                }
+            }
+        }
+        break;
+    }
     }
 
-    /**
-     * Marks tile at specified indeces.
-     *
-     * @param row    row number
-     * @param column column number
-     */
-    public void markTile(int row, int column) {
-        switch (tiles[row][column].getState()) {
-            case CLOSED:
-                tiles[row][column].setState(Tile.State.MARKED);
-                break;
-            case MARKED:
-                tiles[row][column].setState(Tile.State.CLOSED);
-                break;
-        }
-    }
-
-    /**
-     * Generates playing field.
-     */
-    private void generate() {
-        Random rd = new Random();
-        int count = 0;
-        while (count < mineCount) {
-            int row = rd.nextInt(rowCount);
-            int column = rd.nextInt(columnCount);
-
-            if (tiles[row][column] == null) {
-                tiles[row][column] = new Mine();
-                count++;
+        /**
+         * Generates playing field.
+         */
+        private void generate () {
+            Random rd = new Random();
+            int count = 1;
+            tiles[rd.nextInt(4)][rd.nextInt(4)] = new Tile();
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    Tile tile = new Tile();
+                if (tiles[i][j] == null) {
+                    tiles[i][j] = tile;
+                    tile.setValue(count++);
+                }
+                }
             }
         }
-
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles[i].length; j++) {
-                if (tiles[i][j] == null)
-                    tiles[i][j] = new Clue(countAdjacentMines(i, j));
-            }
-        }
-    }
-
-    /**
-     * Returns true if game is solved, false otherwise.
-     *
-     * @return true if game is solved, false otherwise
-     */
     public boolean isSolved() {
-        return (getNumberOf(Tile.State.OPEN) + mineCount) == rowCount * columnCount;
-    }
-
-    public int getNumberOf(Tile.State state) {
-        int count = 0;
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles[i].length; j++) {
-                if (tiles[i][j].getState().equals(state))
+        int count = 1;
+        int idealCount = 1;
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (tiles[i][j].value == count)
+                        idealCount++;
                     count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * Returns number of adjacent mines for a tile at specified position in the field.
-     *
-     * @param row    row number.
-     * @param column column number.
-     * @return number of adjacent mines.
-     */
-    private int countAdjacentMines(int row, int column) {
-        int count = 0;
-        for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-            int actRow = row + rowOffset;
-            if (actRow >= 0 && actRow < rowCount) {
-                for (int columnOffset = -1; columnOffset <= 1; columnOffset++) {
-                    int actColumn = column + columnOffset;
-                    if (actColumn >= 0 && actColumn < columnCount) {
-                        if (tiles[actRow][actColumn] instanceof Mine) {
-                            count++;
-                        }
-                    }
                 }
             }
-        }
 
-        return count;
+        return count==idealCount;
     }
 
-    public int getRemainingMineCount() {
-        int count = 0;
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles[i].length; j++) {
-                if (tiles[i][j].getState()== Tile.State.CLOSED && tiles[i][j] instanceof Mine)
-                    count++;
-            }
+    public void savefield() {
+        try (OutputStream is = new FileOutputStream("savings.txt");
+        ObjectOutputStream ois = new ObjectOutputStream(is))
+        {
+            ois.writeObject(this);
         }
-        return count;
-    }
-    private void getOpenAdjacentTiles(int row, int column) {
-        for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-            int actRow = row + rowOffset;
-            if (actRow >= 0 && actRow < rowCount) {
-                for (int columnOffset = -1; columnOffset <= 1; columnOffset++) {
-                    int actColumn = column + columnOffset;
-                    if (actColumn >= 0 && actColumn < columnCount) {
-                        openTile(actRow, actColumn);
-                    }
-                }
-            }
+        catch (IOException e) {
+            e.getMessage();
+        }
         }
     }
 
-}
 
-}
+

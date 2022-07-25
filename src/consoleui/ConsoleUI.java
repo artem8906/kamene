@@ -1,32 +1,21 @@
 package consoleui;
 
 import core.Field;
+import core.GameState;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 public class ConsoleUI {
-    /**
-     * Playing field.
-     */
+
     private Field field;
 
-    /**
-     * Input reader.
-     */
+    long startTime = System.currentTimeMillis();
+
     private BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-    private static final Pattern PATTERN = Pattern.compile("([MO])([A-Za-z])(\\d{1,2})");
-    private static final int CHARINDEX = 65;
 
-
-    /**
-     * Reads line of text from the reader.
-     *
-     * @return line as a string
-     */
     private String readLine() {
         try {
             return input.readLine();
@@ -35,112 +24,74 @@ public class ConsoleUI {
         }
     }
 
-    /**
-     * Starts the game.
-     *
-     * @param field field of mines and clues
-     */
-    @Override
     public void newGameStarted(Field field) {
         this.field = field;
-        System.out.println("Input game level \n B - BEGINNER  \n I - INTERMEDIATE \n E - EXPERT");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            String s = reader.readLine();
-        } catch (IOException e) {
-            e.getMessage();
-        }
+
         do {
             update();
-            processInput();//open is here
-
-            //no update field output after open a mine
-
-            if (field.getState().equals(GameState.FAILED)) {
-                System.out.println("Loss");
-                System.exit(0);
-            }
+            processInput();
+            field.savefield();
 
             if (field.isSolved()) {
-                System.out.println("Win");
-                Minesweeper instance = Minesweeper.getInstance();
-                instance.getBestTimes().addPlayerTime(instance.nameOfPlayer, instance.getPlayingSeconds());
-                System.out.println(instance.getBestTimes());
-                System.exit(0);
+
             }
         } while (true);
     }
 
-    /**
-     * Updates user interface - prints the field.
-     */
-    @Override
+
+    public int getTimeOfPlay() {
+        return (int) (System.currentTimeMillis() - startTime) / 1000;
+    }
+
     public void update() {
-        char a = CHARINDEX;
-        System.out.print("  ");
-        for (int i = 0; i < field.getColumnCount(); i++) {
-            System.out.print(i + " ");
-        }
-        System.out.println();
-        for (int i = 0; i < field.getRowCount(); i++) {
-            if (a == 91) a += 6;
-            System.out.printf("%c ", a);
-            a++;
-            for (int j = 0; j < field.getColumnCount(); j++) {
-                if (j > 9) System.out.print(" ");
-                System.out.print(field.getTiles(i, j) + " ");
+        field.updateState();
+        for (int i = 0; i < field.getTiles().length; i++) {
+            for (int j = 0; j < field.getTiles().length; j++) {
+                System.out.print(field.getTiles()[i][j]);
             }
             System.out.println();
         }
     }
 
-    /**
-     * Processes user input.
-     * Reads line from console and does the action on a playing field according to input string.
-     */
     private void processInput() {
+        System.out.printf("Time of play %d seconds\n", getTimeOfPlay());
+        System.out.println("Press 'w', 's', 'a', 'd' for moving tiles, 'new' for new game or 'exit' for exit");
         String line = readLine();
-
-        try {
-            handleInput(line);
-        }
-        catch (WrongFormatException e) {
-            e.getMessage();
-            processInput();
-        }
-
+        handleInput(line);
     }
 
-    private void handleInput(String input) throws WrongFormatException {
-
-        if (input.equals("X")) return;
-        Matcher matcher = PATTERN.matcher(input);
-        String action = "",rowStr = "", colStr = "";
-
-        if (matcher.find()) {
-            action = matcher.group(1);
-            rowStr = matcher.group(2);
-            colStr = matcher.group(3);
-        } else processInput();
-
-        int column = Integer.parseInt(colStr);
-        int row = (int) rowStr.charAt(0) - CHARINDEX;
-
-        if (column >= field.getColumnCount() | row < 0 | (row > 25 & row < 32) | row > 57 | row >= field.getRowCount()) {
-            throw new WrongFormatException("Wrong parameters of tile");
-        }
-
+    private void handleInput(String input) {
+        String action = input;
         switch (action) {
-            case "M":
-                field.markTile(row, column);
+            case "w":
+                field.move("UP");
                 break;
-            case "O":
-                field.openTile(row, column);
+
+            case "s":
+                field.move("DOWN");
                 break;
+
+            case "a":
+                field.move("LEFT");
+                break;
+
+            case "d":
+                field.move("RIGHT");
+                break;
+
+            case "new":
+                newGameStarted(new Field(4));
+                break;
+            case "exit":
+                System.exit(1);
+                break;
+
             default:
                 processInput();
+                System.out.println("Try again!");
+                break;
         }
     }
 }
 
-}
+
