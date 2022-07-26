@@ -14,10 +14,7 @@ public class Kamene {
              ObjectInputStream ois = new ObjectInputStream(is)) {
             field = (Field) ois.readObject();
         } catch (Exception e) {
-            e.getMessage();
-        } finally {
             field = new Field(4);
-        }
 
         instance = this;
         userInterface = new ConsoleUI();
