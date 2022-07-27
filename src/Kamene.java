@@ -15,6 +15,7 @@ public class Kamene {
             field = (Field) ois.readObject();
         } catch (Exception e) {
             field = new Field(4);
+        }
 
         instance = this;
         userInterface = new ConsoleUI();
